@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """
-《中国无线电》杂志 RAG 系统 — CLI 入口。
+RAG 系统 CLI 入口。
 用法:
-  uv run python cli.py                                    # 交互模式
-  uv run python cli.py "你的问题"                          # 单次查询
-  uv run python cli.py --eval                             # 在 qa_pairs.jsonl 上评测
-  uv run python cli.py --inspect                          # 查看索引详情
-  uv run python cli.py --rebuild                          # 强制重建索引
+  uv run python cli.py "你的问题"
+  uv run python cli.py --batch input.jsonl -o output.jsonl
+  uv run python cli.py --inspect
+  uv run python cli.py --rebuild
 """
 
 import sys
@@ -82,33 +81,6 @@ def cmd_query(query: str):
             print(f"  - 第{e.page}页, {e.section}")
 
 
-def cmd_eval():
-    """在 qa_pairs.jsonl 上评测"""
-    from magazine_rag.generator import evaluate_on_qa
-
-    retriever = _build_retriever()
-    generator = _build_generator()
-
-    results = evaluate_on_qa(retriever, generator)
-
-    total = len(results)
-    correct_type = sum(
-        1 for r in results
-        if r.answerable == (r.query_type == "answerable")
-    )
-    print(f"\n{'='*50}")
-    print(f"  评测完成: {correct_type}/{total} 类型判断正确 "
-          f"({correct_type/total*100:.1f}%)")
-    print(f"{'='*50}")
-
-    for r in results:
-        status = "OK" if r.answerable == (r.query_type == "answerable") else "MISMATCH"
-        print(f"  [{r.q_id}] {status} "
-              f"answerable={r.answerable} (expected={r.query_type})")
-        if r.answerable:
-            print(f"     答案: {r.answer[:80]}...")
-
-
 def cmd_interactive():
     """交互式问答循环"""
     from magazine_rag.generator import answer_question
@@ -132,10 +104,6 @@ def cmd_interactive():
             continue
         if query.lower() in ("quit", "exit", "q"):
             break
-        if query == "!eval":
-            cmd_eval()
-            continue
-
         result = answer_question(query, retriever, generator)
         print(f"\n答案: {result.answer}")
         if result.gold_chunks:
@@ -193,8 +161,6 @@ def cmd_batch():
 def main():
     if len(sys.argv) < 2:
         cmd_interactive()
-    elif sys.argv[1] == "--eval":
-        cmd_eval()
     elif sys.argv[1] in ("--batch", "-b"):
         cmd_batch()
     elif sys.argv[1] == "--inspect":
