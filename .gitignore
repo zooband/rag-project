@@ -1,0 +1,22 @@
+# 环境
+.env
+.venv/
+
+# Python 缓存
+__pycache__/
+*.pyc
+
+# 自动生成的索引缓存
+index_cache/
+
+# 评测中间输出
+qa_final.jsonl
+qa_test*.jsonl
+qa_results*.jsonl
+qa_outputs*.jsonl
+
+# 报告（编译产物及 LaTeX）
+report/
+
+# 原始 PDF（版权问题，不提交）
+source/*.pdf
