@@ -2,6 +2,7 @@
 """
 RAG 系统 CLI 入口。
 用法:
+  uv run python cli.py --build
   uv run python cli.py "你的问题"
   uv run python cli.py --batch input.jsonl -o output.jsonl
   uv run python cli.py --inspect
@@ -10,7 +11,6 @@ RAG 系统 CLI 入口。
 
 import sys
 from pathlib import Path
-from collections import Counter
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -117,6 +117,7 @@ def cmd_batch():
     用法: uv run python cli.py --batch input.jsonl -o output.jsonl
     """
     import json, time
+    from tqdm import tqdm
     from magazine_rag.generator import question_worker
     from magazine_rag.indexer import build_index
 
@@ -141,11 +142,9 @@ def cmd_batch():
 
     t0 = time.time()
     results = []
-    for seq, item in enumerate(items):
+    for seq, item in enumerate(tqdm(items, desc="eval", unit="q")):
         _, result = question_worker(retriever, item, seq)
         results.append(result)
-        pct = f"{seq+1}/{len(items)}"
-        print(f"  [{pct}] q_{seq+1} answerable={result.answerable}")
 
     elapsed = time.time() - t0
     answerable_count = sum(1 for r in results if r.answerable)
@@ -165,11 +164,15 @@ def main():
         cmd_batch()
     elif sys.argv[1] == "--inspect":
         cmd_inspect()
+    elif sys.argv[1] == "--build":
+        from magazine_rag.indexer import build_index
+        build_index()
+        print("index ready!")
     elif sys.argv[1] == "--rebuild":
         from magazine_rag.indexer import build_index
-        print("强制重建索引...")
+        print("force rebuilding index ...")
         build_index(force_rebuild=True)
-        print("完成！")
+        print("done!")
     else:
         cmd_query(" ".join(sys.argv[1:]))
 

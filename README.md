@@ -12,12 +12,17 @@ uv sync
 cp .env.example .env
 # 编辑 .env，填入 LLM_API_KEY
 
-# 问答
+# 首次构建索引（解析 PDF、切分、向量化，约 1-3 分钟）
+uv run python cli.py --build
+
+# 问答（索引已存在时直接使用缓存；未构建则会自动构建）
 uv run python cli.py "你的问题"
 
 # 批量评测（读取 jsonl，逐题问答，输出结果文件）
 uv run python cli.py --batch qa_pairs_large.jsonl -o results.jsonl
 ```
+
+其他命令：`--inspect` 查看索引统计，`--rebuild` 强制重建索引。
 
 ## 目录结构
 
