@@ -50,7 +50,6 @@ class LLMGenerator:
     def generate(self, query: str, context: str) -> LLMOutput:
         import json, time
         client = OpenAI(api_key=config.LLM_API_KEY, base_url=config.LLM_BASE_URL)
-        t0 = time.time()
         for attempt in range(3):
             resp = client.chat.completions.create(
                 model=config.LLM_MODEL,
@@ -62,18 +61,13 @@ class LLMGenerator:
                     {"role": "user", "content": build_user_prompt(query, context)},
                 ],
             )
-            elapsed = time.time() - t0
             raw = (resp.choices[0].message.content or "").strip()
             try:
-                result = LLMOutput(**json.loads(raw))
-                if elapsed > 3:
-                    print(f"  [timing] LLM API: {elapsed:.1f}s")
-                return result
+                return LLMOutput(**json.loads(raw))
             except (json.JSONDecodeError, Exception):
                 if attempt < 2:
                     time.sleep(1)
                     continue
-        print(f"  [timing] LLM failed after {elapsed:.1f}s")
         return LLMOutput(answerable=False, answer="文档中没有提供相关信息")
 
 

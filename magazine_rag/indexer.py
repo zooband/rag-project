@@ -74,6 +74,8 @@ class HybridIndex:
 
 def _build_bm25(chunks: list[Chunk]) -> tuple[BM25Okapi, list[str], list[str]]:
     """构建 BM25 索引"""
+    import warnings
+    warnings.filterwarnings("ignore", category=SyntaxWarning, module="jieba")
     import jieba
 
     doc_ids: list[str] = []
@@ -112,14 +114,22 @@ def build_index(force_rebuild: bool = False) -> HybridIndex:
         if cached is not None:
             return cached
 
+    print("\n[build_index] cache not found, building from PDFs (~1-3 min) ...")
+
+    print("[build_index] 1) parsing PDFs and chunking ...")
     from .chunker import chunk_all
     _, all_chunks = chunk_all()
     if not all_chunks:
-        raise RuntimeError("没有可索引的片段")
+        raise RuntimeError("no chunks to index")
 
+    print(f"[build_index] 2) embedding {len(all_chunks)} chunks (first run downloads the model) ...")
     embeddings = _build_embeddings(all_chunks)
+
+    print("[build_index] 3) building BM25 keyword index ...")
     bm25, doc_ids, doc_texts = _build_bm25(all_chunks)
 
+    print("[build_index] 4) saving index to disk ...")
     index = HybridIndex(all_chunks, embeddings, bm25, doc_ids, doc_texts)
     index.save(config.INDEX_DIR)
+    print("[build_index] done. subsequent runs load the cache.\n")
     return index
