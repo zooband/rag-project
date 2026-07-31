@@ -34,9 +34,6 @@ class Retriever:
 
     def retrieve(self, query: str, top_k: int | None = None,
                   doc_filter: str = "") -> list[RetrievedChunk]:
-        import time
-        _t0 = time.time()
-
         top_k = top_k or config.TOP_K_FINAL
         model = self._get_embed_model()
         import jieba
@@ -103,9 +100,6 @@ class Retriever:
 
         expanded = self._rerank(query, expanded, top_k)
         expanded.sort(key=lambda x: x.score, reverse=True)
-        _t = time.time() - _t0
-        if _t > 1:
-            print(f"  [timing] retrieve: {_t:.1f}s ({len(expanded)} results)")
         return expanded[:top_k]
 
     def _expand_context(self, chunk: Chunk, n: int = 1) -> list[Chunk]:

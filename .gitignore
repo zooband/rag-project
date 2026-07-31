@@ -14,6 +14,7 @@ qa_final.jsonl
 qa_test*.jsonl
 qa_results*.jsonl
 qa_outputs*.jsonl
+results.jsonl
 
 # 报告（编译产物及 LaTeX）
 report/
